@@ -97,16 +97,24 @@ df = pd.DataFrame({'Date': Date,  # Date of the match
                    'Result_1': result[0],  # Result of the match
                    'Result_2': result[1]},  # Result of the match
                   index=[0])
-"""
+
 # Iterate over points:
 driver.switch_to.frame(0)
-elements = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']")\
-    .find_elements(By.XPATH, "//div[@class='events-container']")
-for element in tqdm(elements):
-    sub_elements = element.find_elements(By.XPATH, "//div[@class='w100']")
-    print(sub_elements[1].text)
+sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']")\
+    .find_elements(By.XPATH, ".//div[@class='events-container']")
+for set in sets:
+    # Fetch list of players for each team:
+    squads = set.find_element(By.XPATH, ".//vsw-lineup-play-by-play[@class='w100']")
+    host_team = squads.find_element(By.XPATH, ".//div[@class='team']").find_elements(By.XPATH, ".//span[@class='player-nr']")
+    print("host team: ", [player.text for player in host_team])
+    guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']").find_elements(By.XPATH, ".//span[@class='player-nr']")
+    print("guest team: ", [player.text for player in guest_team])
+
+    #sub_elements = set.find_elements(By.XPATH, ".//div[@class='w100']")
+    #print(sub_elements[0].text)
+    print("\n\n\n")
 
 df.to_csv('Matches.csv', index=False)
-"""
+
 # Close browser:
 driver.quit()
