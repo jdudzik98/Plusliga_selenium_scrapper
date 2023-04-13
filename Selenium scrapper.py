@@ -23,7 +23,7 @@ except NoSuchElementException:
     pass
 time.sleep(10)
 
-# Fetch match date:
+# Fetch match information:
 try:
     Date = driver.find_element(By.XPATH, "//div[@class='row text-center gridtable games']//div[@class="
                                          "'date khanded']").text
@@ -62,6 +62,31 @@ try:
 except NoSuchElementException:
     result = None
 
+try:
+    players_tables = driver.find_element(By.XPATH, "//table[@class='rs-standings-table stats-table table "
+                                                   "table-bordered table-hover table-condensed table-striped "
+                                                   "responsive double-responsive']")
+    numbers = players_tables.find_elements(By.XPATH, "//th[@class='min-responsive']//span")
+    names = players_tables.find_elements(By.XPATH, "//th[@class='min-responsive']//a")
+    hrefs = players_tables.find_elements(By.XPATH, "//th[@class='min-responsive']//a")
+
+    # Create an empty players dataframe
+    players = pd.DataFrame({'nameAndSurname': [], 'number': [], 'href': []}, index=[])
+
+    # Iterate over players to append them to the dataframe:
+    for player in range(len(numbers)):
+        players.loc[len(players)] = [names[player].text, numbers[player].text, hrefs[player].get_attribute('href')]
+
+    # Assign team names to the players dataframe:
+    players['number'] = pd.to_numeric(players['number'])
+    players['team'] = unique_href_list[1]
+    first_change_idx = (players['number'].diff() < 0).idxmax() - 1
+    players.loc[0:first_change_idx, 'team'] = unique_href_list[0]
+
+except NoSuchElementException:
+    players = None
+    print("Couldn't find players")
+
 # Create a dataframe:
 df = pd.DataFrame({'Date': Date,  # Date of the match
                    'Phase': Phase,  # Phase of the match
@@ -72,7 +97,7 @@ df = pd.DataFrame({'Date': Date,  # Date of the match
                    'Result_1': result[0],  # Result of the match
                    'Result_2': result[1]},  # Result of the match
                   index=[0])
-
+"""
 # Iterate over points:
 driver.switch_to.frame(0)
 elements = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']")\
@@ -82,6 +107,6 @@ for element in tqdm(elements):
     print(sub_elements[1].text)
 
 df.to_csv('Matches.csv', index=False)
-
+"""
 # Close browser:
 driver.quit()
