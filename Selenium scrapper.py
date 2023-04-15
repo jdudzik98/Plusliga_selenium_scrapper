@@ -102,17 +102,77 @@ df = pd.DataFrame({'Date': Date,  # Date of the match
 driver.switch_to.frame(0)
 sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']")\
     .find_elements(By.XPATH, ".//div[@class='events-container']")
-for set in sets:
+
+for set in sets[0:1]:
+
+    # Fetch set information:
+    set_info = set.find_element(By.XPATH, ".//vsw-end-set-play-by-play[@class='w100']")
+    set_score = set_info.find_elements(By.XPATH, ".//div[@class='result match-result']")
+    point_score = set_info.find_elements(By.XPATH, ".//div[@class='result set-result']")
+    set_score_host = int(set_score[0].text)
+    set_score_guest = int(set_score[1].text)
+    point_score_host = int(point_score[0].text)
+    point_score_guest = int(point_score[1].text)
+    if point_score_host > point_score_guest:
+        set_score_host_before = set_score_host-1
+        set_score_guest_before = set_score_guest
+    else:
+        set_score_host_before = set_score_host
+        set_score_guest_before = set_score_guest-1
+    print(set_score_host, set_score_guest, point_score_host, point_score_guest, set_score_host_before,
+          set_score_guest_before)
+
     # Fetch list of players for each team:
     squads = set.find_element(By.XPATH, ".//vsw-lineup-play-by-play[@class='w100']")
-    host_team = squads.find_element(By.XPATH, ".//div[@class='team']").find_elements(By.XPATH, ".//span[@class='player-nr']")
+    host_team = squads.find_element(By.XPATH, ".//div[@class='team']").\
+        find_elements(By.XPATH, ".//span[@class='player-nr']")
     print("host team: ", [player.text for player in host_team])
-    guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']").find_elements(By.XPATH, ".//span[@class='player-nr']")
+    guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']").\
+        find_elements(By.XPATH, ".//span[@class='player-nr']")
     print("guest team: ", [player.text for player in guest_team])
 
-    #sub_elements = set.find_elements(By.XPATH, ".//div[@class='w100']")
-    #print(sub_elements[0].text)
+    # Fetch points:
+    play_by_play = set.find_elements(By.XPATH, ".//div[@class='w100']")
+    for point in reversed(play_by_play):
+        try:
+            host_score = point.find_element(By.XPATH, ".//span[contains(@class, 'left')]").text
+            guest_score = point.find_element(By.XPATH, ".//span[contains(@class, 'right')]").text
+            serving_player = point.find_element(By.XPATH, ".//p[@class='shirt-number']").text
+            serve_result = point.find_element(By.XPATH, ".//span[@class='skill']").text
+            serve_effect = point.find_element(By.XPATH, ".//span[@class='effect']").text
+            try:  # If first element of the point contains character "right" in class name (i.e. guest is serving):
+                serving = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[1]").\
+                    find_element(By.XPATH, ".//div[@class='rally-playrow-play-by-play right']").text
+                serving = "Guest"
+            except NoSuchElementException:
+                serving = "Host"
+            try:  # If the point is an ace:
+                ace = point.find_element(By.XPATH, ".//span[@class='play-type']").text
+                if ace == "- SERVE":
+                    serve_effect = "ace"
+            except NoSuchElementException:
+                pass
+            try:  # Check the receiver of the serve:
+                receiver = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]").\
+                    find_element(By.XPATH, ".//p[@class='shirt-number']").text
+                receive_skill = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]").\
+                    find_element(By.XPATH, ".//span[@class='skill']").text
+                receive_effect = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]").\
+                    find_element(By.XPATH, ".//span[@class='effect']").text
+            except NoSuchElementException:
+                receiver = None
+                receive_skill = None
+                receive_effect = None
+
+            print(host_score, ":", guest_score, " serving player: ", serving_player, " from team ", serving,
+                  " with effect", serve_result,  serve_effect, "\n"
+                  "receiver: ", receiver, " with effect", receive_skill, receive_effect, "\n")
+
+        except NoSuchElementException:
+            print("No score")
+            continue
     print("\n\n\n")
+
 
 df.to_csv('Matches.csv', index=False)
 
