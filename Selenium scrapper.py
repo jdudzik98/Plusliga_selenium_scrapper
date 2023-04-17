@@ -1,5 +1,4 @@
 from selenium import webdriver
-import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -8,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 driver = webdriver.Chrome('./chromedriver')
+year = 2020
 url = 'https://www.plusliga.pl/games/id/1101129/tour/2020.html'
 driver.get(url)
 
@@ -94,49 +94,47 @@ except NoSuchElementException:
 
 # create a dictionary with the match data:
 single_match_info = {'Date': Date,  # Date of the match
+                     'Year': year,  # Year of the match
                      'Phase': Phase,  # Phase of the match
                      'Round': Round,  # Round of the match
                      'Spectators': Spectators,  # Number of spectators
                      'Capacity': Capacity,  # Capacity of the hall
-                     'Team1': unique_href_list[0],  # Team 1
-                     'Team2': unique_href_list[1],  # Team 2
-                     'Result_1': result[0],  # Result of the match
-                     'Result_2': result[1],  # Result of the match
+                     'Team1_href': unique_href_list[0],  # Team 1
+                     'Team2_href': unique_href_list[1],  # Team 2
                      # 'Players': players
                      }
 
 # Create a dataframe:
 match_dataframe = pd.DataFrame({'Date': [],  # Date of the match
+                                'Year': [],  # Year of the match
                                 'Phase': [],  # Phase of the match
                                 'Round': [],  # Round of the match
                                 'Spectators': [],  # Number of spectators
                                 'Capacity': [],  # Capacity of the hall
-                                'Team1': [],  # Team 1
-                                'Team2': [],  # Team 2
-                                'Result_1': [],  # Result of the match
-                                'Result_2': [],  # Result of the match
+                                'Team1_href': [],  # Team 1
+                                'Team2_href': [],  # Team 2
                                 'Players': [],
-                                'set_score_host': [],
-                                'set_score_guest': [],
-                                'point_score_host': [],
-                                'point_score_guest': [],
-                                'set_score_host_before': [],
-                                'set_score_guest_before': [],
-                                'host_score': [],
-                                'guest_score': [],
-                                'serving_team': [],
-                                'serving_player': [],
-                                'serve_result': [],
-                                'serve_effect': [],
-                                'receiver': [],
-                                'receive_skill': [],
-                                'receive_effect': [],
-                                'net_crossings': [],
-                                'point_winner': [],
-                                'Timeouts_host': [],
-                                'Timeouts_guest': [],
-                                'Challenges_host': [],
-                                'Challenges_guest': []})
+                                'Current_set_score_host': [],
+                                'Current_set_score_guest': [],
+                                'Final_point_score_host': [],
+                                'Final_point_score_guest': [],
+                                'Before_set_score_host': [],
+                                'Before_set_score_guest': [],
+                                'Current_point_score_host': [],
+                                'Current_point_score_guest': [],
+                                'Serving_team': [],
+                                'Serving_player_number': [],
+                                'Serve_result': [],
+                                'Serve_effect': [],
+                                'Receiver_player_number': [],
+                                'Receive_skill': [],
+                                'Receive_effect': [],
+                                'Net_crossings_number': [],
+                                'Point_winner_team': [],
+                                'Current_timeouts_host': [],
+                                'Current_timeouts_guest': [],
+                                'Current_challenges_host': [],
+                                'Current_challenges_guest': []})
 
 # Iterate over points:
 driver.switch_to.frame(0)
@@ -177,12 +175,12 @@ for set in sets:
     print("guest team: ", [player.text for player in guest_team])
 
     # create a dictionary with the set information to append to match dataframe
-    single_set_info = {'set_score_host': set_score_host,
-                       'set_score_guest': set_score_guest,
-                       'point_score_host': point_score_host,
-                       'point_score_guest': point_score_guest,
-                       'set_score_host_before': set_score_host_before,
-                       'set_score_guest_before': set_score_guest_before}
+    single_set_info = {'Current_set_score_host': set_score_host,
+                       'Current_set_score_guest': set_score_guest,
+                       'Final_point_score_host': point_score_host,
+                       'Final_point_score_guest': point_score_guest,
+                       'Before_set_score_host': set_score_host_before,
+                       'Before_set_score_guest': set_score_guest_before}
 
     # Fetch points:
     play_by_play = set.find_elements(By.XPATH, ".//div[@class='w100']")
@@ -229,7 +227,8 @@ for set in sets:
 
             try:
                 touches = point.find_elements(By.XPATH,
-                                              './/div[contains(@class, "rally-playrow-play-by-play") or contains(@class, "rally-playrow-play-by-play right")]')
+                                              './/div[contains(@class, "rally-playrow-play-by-play") or contains('
+                                              '@class, "rally-playrow-play-by-play right")]')
                 net_crossings = 0
                 current_touch = serving
                 last_touch = serving
@@ -249,27 +248,24 @@ for set in sets:
 
             except NoSuchElementException:
                 print("No right class")
-
-            print(host_score, ":", guest_score, " serving player: ", serving_player, " from team ", serving,
-                  " with effect", serve_result, serve_effect, "\n", "receiver: ", receiver, " with effect",
-                  receive_skill, receive_effect, "\n", point_winner, " scored with ", net_crossings, " net crossings\n")
-
+                net_crossings = None
             # create a dictionary with the point information to append to set dataframe
-            single_point_info = {'host_score': host_score,
-                                 'guest_score': guest_score,
-                                 'serving_player': serving_player,
-                                 'serving_team': serving,
-                                 'serve_result': serve_result,
-                                 'serve_effect': serve_effect,
-                                 'receiver': receiver,
-                                 'receive_skill': receive_skill,
-                                 'receive_effect': receive_effect,
-                                 'net_crossings': net_crossings,
-                                 'point_winner': point_winner,
-                                 'Timeouts_host': Timeouts_host,
-                                 'Timeouts_guest': Timeouts_guest,
-                                 'Challenges_host': Challenges_host,
-                                 'Challenges_guest': Challenges_guest}
+            single_point_info = {'Current_point_score_host': host_score,
+                                 'Current_point_score_guest': guest_score,
+                                 'Serving_team': serving,
+                                 'Serving_player_number': serving_player,
+                                 'Serve_result': serve_result,
+                                 'Serve_effect': serve_effect,
+                                 'Receiver_player_number': receiver,
+                                 'Receive_skill': receive_skill,
+                                 'Receive_effect': receive_effect,
+                                 'Net_crossings_number': net_crossings,
+                                 'Point_winner_team': point_winner,
+                                 'Current_timeouts_host': Timeouts_host,
+                                 'Current_timeouts_guest': Timeouts_guest,
+                                 'Current_challenges_host': Challenges_host,
+                                 'Current_challenges_guest': Challenges_guest}
+
             single_point_info = dict(single_point_info, **single_set_info, **single_match_info)
             print(single_point_info)
             match_dataframe.loc[len(match_dataframe)] = single_point_info
@@ -280,7 +276,8 @@ for set in sets:
                                                ".//div[contains(@class, 'video-challenge-play-by-play')]")
                 try:
                     challenge = point.find_element(By.XPATH,
-                                                   ".//div[@class='video-challenge-play-by-play event-play-by-play right']")
+                                                   ".//div[@class='video-challenge-play-by-play event-play-by-play "
+                                                   "right']")
                     print("Challenge right")
                     Challenges_guest += 1
                 except NoSuchElementException:

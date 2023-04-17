@@ -1,5 +1,4 @@
 from selenium import webdriver
-import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -10,20 +9,20 @@ from tqdm import tqdm
 driver = webdriver.Chrome('./chromedriver')
 
 # Create the dataframe to store the data:
-df = pd.DataFrame({'year': [],
-                   'round_number': [],
-                   'position': [],
-                   'team': [],
-                   'points': [],
-                   'played_matches': [],
-                   'won_matches': [],
-                   'lost_matches': [],
-                   'sets_won': [],
-                   'sets_lost': [],
-                   'points_won': [],
-                   'points_lost': [],
-                   'sets_ratio': [],
-                   'points_ratio': []}
+df = pd.DataFrame({'Year': [],
+                   'Round': [],
+                   'Current_position': [],
+                   'Team': [],
+                   'Season_points': [],
+                   'Played_matches': [],
+                   'Won_matches': [],
+                   'Lost_matches': [],
+                   'Sets_won': [],
+                   'Sets_lost': [],
+                   'Points_won': [],
+                   'Points_lost': [],
+                   'Sets_ratio': [],
+                   'Points_ratio': []}
                   )
 
 # create loop to create urls for each season
@@ -68,8 +67,8 @@ for year in tqdm(range(2019, 2022)):
             # print('clicked round')
 
             # Get the table:
-            table = driver.find_element(By.XPATH,
-                                        "//table[@class='rs-standings-table table table-bordered table-hover table-condensed']")
+            table = driver.find_element(By.XPATH, "//table[@class='rs-standings-table table table-bordered "
+                                                  "table-hover table-condensed']")
             # Get the table rows:
             rows = table.find_elements(By.XPATH, ".//tbody/tr[not(contains(@class, 'hidden'))]")
 
@@ -80,20 +79,20 @@ for year in tqdm(range(2019, 2022)):
                 point_info = row.find_elements(By.XPATH, ".//td")
 
                 # Create a dictionary:
-                data = {'year': year,
-                        'round_number': round_number,
-                        'position': point_info[0].text,
-                        'team': team,
-                        'points': point_info[2].text,
-                        'played_matches': point_info[3].text,
-                        'won_matches': point_info[4].text,
-                        'lost_matches': point_info[5].text,
-                        'sets_won': point_info[6].text,
-                        'sets_lost': point_info[7].text,
-                        'points_won': point_info[8].text,
-                        'points_lost': point_info[9].text,
-                        'sets_ratio': point_info[10].text,
-                        'points_ratio': point_info[11].text}
+                data = {'Year': year,
+                        'Round': round_number,
+                        'Current_position': point_info[0].text,
+                        'Team': team,
+                        'Season_points': point_info[2].text,
+                        'Played_matches': point_info[3].text,
+                        'Won_matches': point_info[4].text,
+                        'Lost_matches': point_info[5].text,
+                        'Sets_won': point_info[6].text,
+                        'Sets_lost': point_info[7].text,
+                        'Points_won': point_info[8].text,
+                        'Points_lost': point_info[9].text,
+                        'Sets_ratio': point_info[10].text,
+                        'Points_ratio': point_info[11].text}
                 # Append the dictionary to the dataframe:
                 df.loc[len(df)] = data
         except NoSuchElementException:
