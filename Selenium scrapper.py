@@ -22,7 +22,6 @@ except NoSuchElementException:
     print('not clicked')
     pass
 
-
 # Fetch match information:
 try:
     Date = driver.find_element(By.XPATH, "//div[@class='row text-center gridtable games']//div[@class="
@@ -34,6 +33,12 @@ try:
                                           "[1]").text
 except NoSuchElementException:
     Phase = None
+try:
+    Round = driver.find_element(By.XPATH,
+                                "//div[@class='row text-center']//*[text()='Termin:']/following-sibling::node()"
+                                "[1]").text
+except NoSuchElementException:
+    Round = None
 try:
     Spectators = driver.find_element(By.XPATH, "//div[@class='row text-center']//*[text()='Liczba widzów:']/following-"
                                                "sibling::node()[1]").text
@@ -87,21 +92,23 @@ except NoSuchElementException:
     players = None
     print("Couldn't find players")
 
-#create a dictionary with the match data:
+# create a dictionary with the match data:
 single_match_info = {'Date': Date,  # Date of the match
-                'Phase': Phase,  # Phase of the match
-                'Spectators': Spectators,  # Number of spectators
-                'Capacity': Capacity,  # Capacity of the hall
-                'Team1': unique_href_list[0],  # Team 1
-                'Team2': unique_href_list[1],  # Team 2
-                'Result_1': result[0],  # Result of the match
-                'Result_2': result[1],  # Result of the match
-                #'Players': players
-                }
+                     'Phase': Phase,  # Phase of the match
+                     'Round': Round,  # Round of the match
+                     'Spectators': Spectators,  # Number of spectators
+                     'Capacity': Capacity,  # Capacity of the hall
+                     'Team1': unique_href_list[0],  # Team 1
+                     'Team2': unique_href_list[1],  # Team 2
+                     'Result_1': result[0],  # Result of the match
+                     'Result_2': result[1],  # Result of the match
+                     # 'Players': players
+                     }
 
 # Create a dataframe:
 match_dataframe = pd.DataFrame({'Date': [],  # Date of the match
                                 'Phase': [],  # Phase of the match
+                                'Round': [],  # Round of the match
                                 'Spectators': [],  # Number of spectators
                                 'Capacity': [],  # Capacity of the hall
                                 'Team1': [],  # Team 1
@@ -131,10 +138,9 @@ match_dataframe = pd.DataFrame({'Date': [],  # Date of the match
                                 'Challenges_host': [],
                                 'Challenges_guest': []})
 
-
 # Iterate over points:
 driver.switch_to.frame(0)
-sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']")\
+sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']") \
     .find_elements(By.XPATH, ".//div[@class='events-container']")
 
 for set in sets:
@@ -143,7 +149,6 @@ for set in sets:
     Timeouts_guest = 0
     Challenges_host = 0
     Challenges_guest = 0
-
 
     # Fetch set information:
     set_info = set.find_element(By.XPATH, ".//vsw-end-set-play-by-play[@class='w100']")
@@ -154,20 +159,20 @@ for set in sets:
     point_score_host = int(point_score[0].text)
     point_score_guest = int(point_score[1].text)
     if point_score_host > point_score_guest:
-        set_score_host_before = set_score_host-1
+        set_score_host_before = set_score_host - 1
         set_score_guest_before = set_score_guest
     else:
         set_score_host_before = set_score_host
-        set_score_guest_before = set_score_guest-1
+        set_score_guest_before = set_score_guest - 1
     print(set_score_host, set_score_guest, point_score_host, point_score_guest, set_score_host_before,
           set_score_guest_before)
 
     # Fetch list of players for each team:
     squads = set.find_element(By.XPATH, ".//vsw-lineup-play-by-play[@class='w100']")
-    host_team = squads.find_element(By.XPATH, ".//div[@class='team']").\
+    host_team = squads.find_element(By.XPATH, ".//div[@class='team']"). \
         find_elements(By.XPATH, ".//span[@class='player-nr']")
     print("host team: ", [player.text for player in host_team])
-    guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']").\
+    guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']"). \
         find_elements(By.XPATH, ".//span[@class='player-nr']")
     print("guest team: ", [player.text for player in guest_team])
 
@@ -178,8 +183,6 @@ for set in sets:
                        'point_score_guest': point_score_guest,
                        'set_score_host_before': set_score_host_before,
                        'set_score_guest_before': set_score_guest_before}
-
-
 
     # Fetch points:
     play_by_play = set.find_elements(By.XPATH, ".//div[@class='w100']")
@@ -193,13 +196,14 @@ for set in sets:
 
             # Check which team scored the point
             try:
-                point_winner = point.find_element(By.XPATH, ".//div[@class = 'rally-play-by-play event-play-by-play right']")
+                point_winner = point.find_element(By.XPATH,
+                                                  ".//div[@class = 'rally-play-by-play event-play-by-play right']")
                 point_winner = "Guest"
             except NoSuchElementException:
                 point_winner = "Host"
 
             try:  # If first element of the point contains character "right" in class name (i.e. guest is serving):
-                serving = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[1]").\
+                serving = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[1]"). \
                     find_element(By.XPATH, ".//div[@class='rally-playrow-play-by-play right']").text
                 serving = "Guest"
             except NoSuchElementException:
@@ -211,11 +215,11 @@ for set in sets:
             except NoSuchElementException:
                 pass
             try:  # Check the receiver of the serve:
-                receiver = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]").\
+                receiver = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
                     find_element(By.XPATH, ".//p[@class='shirt-number']").text
-                receive_skill = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]").\
+                receive_skill = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
                     find_element(By.XPATH, ".//span[@class='skill']").text
-                receive_effect = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]").\
+                receive_effect = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
                     find_element(By.XPATH, ".//span[@class='effect']").text
 
             except NoSuchElementException:
@@ -225,7 +229,7 @@ for set in sets:
 
             try:
                 touches = point.find_elements(By.XPATH,
-                                               './/div[contains(@class, "rally-playrow-play-by-play") or contains(@class, "rally-playrow-play-by-play right")]')
+                                              './/div[contains(@class, "rally-playrow-play-by-play") or contains(@class, "rally-playrow-play-by-play right")]')
                 net_crossings = 0
                 current_touch = serving
                 last_touch = serving
@@ -244,9 +248,7 @@ for set in sets:
                     net_crossings += 1
 
             except NoSuchElementException:
-                print( "No right class")
-
-
+                print("No right class")
 
             print(host_score, ":", guest_score, " serving player: ", serving_player, " from team ", serving,
                   " with effect", serve_result, serve_effect, "\n", "receiver: ", receiver, " with effect",
@@ -290,7 +292,7 @@ for set in sets:
                     timeout = point.find_element(By.XPATH, ".//div[contains(@class, 'timeout-play-by-play')]")
                     try:
                         timeout = point.find_element(By.XPATH,
-                                                 ".//div[@class='timeout-play-by-play event-play-by-play right']")
+                                                     ".//div[@class='timeout-play-by-play event-play-by-play right']")
                         print("Timeout right")
                         Timeouts_guest += 1
                     except NoSuchElementException:
