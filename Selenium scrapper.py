@@ -93,7 +93,8 @@ except NoSuchElementException:
     print("Couldn't find players")
 
 # create a dictionary with the match data:
-single_match_info = {'Date': Date,  # Date of the match
+single_match_info = {'MatchID': url,  # Match url
+                     'Date': Date,  # Date of the match
                      'Year': year,  # Year of the match
                      'Phase': Phase,  # Phase of the match
                      'Round': Round,  # Round of the match
@@ -105,7 +106,9 @@ single_match_info = {'Date': Date,  # Date of the match
                      }
 
 # Create a dataframe:
-match_dataframe = pd.DataFrame({'Date': [],  # Date of the match
+match_dataframe = pd.DataFrame({'MatchID': [], # Match url
+                                'Set_number': [],  # Set number
+                                'Date': [],  # Date of the match
                                 'Year': [],  # Year of the match
                                 'Phase': [],  # Phase of the match
                                 'Round': [],  # Round of the match
@@ -140,9 +143,10 @@ match_dataframe = pd.DataFrame({'Date': [],  # Date of the match
 driver.switch_to.frame(0)
 sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']") \
     .find_elements(By.XPATH, ".//div[@class='events-container']")
-
-for set in sets:
+set_count = 0
+for set in reversed(sets):
     # Store local variables:
+    set_count += 1  # Set counter
     Timeouts_host = 0
     Timeouts_guest = 0
     Challenges_host = 0
@@ -175,7 +179,8 @@ for set in sets:
     print("guest team: ", [player.text for player in guest_team])
 
     # create a dictionary with the set information to append to match dataframe
-    single_set_info = {'Current_set_score_host': set_score_host,
+    single_set_info = {'Set_number': set_count,
+                       'Current_set_score_host': set_score_host,
                        'Current_set_score_guest': set_score_guest,
                        'Final_point_score_host': point_score_host,
                        'Final_point_score_guest': point_score_guest,
@@ -310,6 +315,7 @@ for set in sets:
 # 7. Create table position
 # 8. Maybe create recent form?
 # 9. Games crawler
+#
 
 
 match_dataframe.to_csv('Matches.csv', index=False)

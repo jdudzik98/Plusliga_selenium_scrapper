@@ -92,7 +92,14 @@ for year in tqdm(range(2019, 2022)):
                         'Points_won': point_info[8].text,
                         'Points_lost': point_info[9].text,
                         'Sets_ratio': point_info[10].text,
-                        'Points_ratio': point_info[11].text}
+                        'Points_ratio': point_info[11].text,
+                        '3-0 wins': point_info[12].text,
+                        '3-1 wins': point_info[13].text,
+                        '3-2 wins': point_info[14].text,
+                        '2-3 losses': point_info[15].text,
+                        '1-3 losses': point_info[16].text,
+                        '0-3 losses': point_info[17].text}
+
                 # Append the dictionary to the dataframe:
                 df.loc[len(df)] = data
         except NoSuchElementException:
