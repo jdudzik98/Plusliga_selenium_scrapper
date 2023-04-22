@@ -106,7 +106,7 @@ single_match_info = {'MatchID': url,  # Match url
                      }
 
 # Create a dataframe:
-match_dataframe = pd.DataFrame({'MatchID': [], # Match url
+match_dataframe = pd.DataFrame({'MatchID': [],  # Match url
                                 'Set_number': [],  # Set number
                                 'Date': [],  # Date of the match
                                 'Year': [],  # Year of the match
@@ -132,6 +132,36 @@ match_dataframe = pd.DataFrame({'MatchID': [], # Match url
                                 'Receiver_player_number': [],
                                 'Receive_skill': [],
                                 'Receive_effect': [],
+                                'Current_host_serves': [],
+                                'Current_host_serve_aces': [],
+                                'Current_host_serve_errors': [],
+                                'Current_host_receive_perfect': [],
+                                'Current_host_receive_positive': [],
+                                'Current_host_receive_near_10_feet_line': [],
+                                'Current_host_receive_negative': [],
+                                'Current_host_receive_ball_returned': [],
+                                'Current_host_receive_errors': [],
+                                'Current_host_attacks': [],
+                                'Current_host_attack_errors': [],
+                                'Current_host_attacks_blocked': [],
+                                'Current_host_attacks_scored': [],
+                                'Current_host_block_scored': [],
+                                'Current_host_block_convertible': [],
+                                'Current_guest_serves': [],
+                                'Current_guest_serve_aces': [],
+                                'Current_guest_serve_errors': [],
+                                'Current_guest_receive_perfect': [],
+                                'Current_guest_receive_positive': [],
+                                'Current_guest_receive_near_10_feet_line': [],
+                                'Current_guest_receive_negative': [],
+                                'Current_guest_receive_ball_returned': [],
+                                'Current_guest_receive_errors': [],
+                                'Current_guest_attacks': [],
+                                'Current_guest_attack_errors': [],
+                                'Current_guest_attacks_blocked': [],
+                                'Current_guest_attacks_scored': [],
+                                'Current_guest_block_points': [],
+                                'Current_guest_block_convertible': [],
                                 'Net_crossings_number': [],
                                 'Point_winner_team': [],
                                 'Current_timeouts_host': [],
@@ -143,8 +173,42 @@ match_dataframe = pd.DataFrame({'MatchID': [], # Match url
 driver.switch_to.frame(0)
 sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']") \
     .find_elements(By.XPATH, ".//div[@class='events-container']")
+
+# Creating match variables:
 set_count = 0
-for set in reversed(sets):
+host_serves = 0
+host_serve_errors = 0
+host_serve_aces = 0
+host_receive_perfect = 0
+host_receive_positive = 0
+host_receive_near_10_feet_line = 0
+host_receive_negative = 0
+host_receive_ball_returned = 0
+host_receive_errors = 0
+host_attacks = 0
+host_attack_errors = 0
+host_attacks_blocked = 0
+host_attacks_scored = 0
+host_block_scored = 0
+host_block_convertible = 0
+
+guest_serves = 0
+guest_serve_errors = 0
+guest_serve_aces = 0
+guest_receive_perfect = 0
+guest_receive_positive = 0
+guest_receive_near_10_feet_line = 0
+guest_receive_negative = 0
+guest_receive_ball_returned = 0
+guest_receive_errors = 0
+guest_attacks = 0
+guest_attack_errors = 0
+guest_attacks_blocked = 0
+guest_attacks_scored = 0
+guest_block_scored = 0
+guest_block_convertible = 0
+
+for set in reversed(sets[0:1]):
     # Store local variables:
     set_count += 1  # Set counter
     Timeouts_host = 0
@@ -166,17 +230,13 @@ for set in reversed(sets):
     else:
         set_score_host_before = set_score_host
         set_score_guest_before = set_score_guest - 1
-    print(set_score_host, set_score_guest, point_score_host, point_score_guest, set_score_host_before,
-          set_score_guest_before)
 
     # Fetch list of players for each team:
     squads = set.find_element(By.XPATH, ".//vsw-lineup-play-by-play[@class='w100']")
     host_team = squads.find_element(By.XPATH, ".//div[@class='team']"). \
         find_elements(By.XPATH, ".//span[@class='player-nr']")
-    print("host team: ", [player.text for player in host_team])
     guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']"). \
         find_elements(By.XPATH, ".//span[@class='player-nr']")
-    print("guest team: ", [player.text for player in guest_team])
 
     # create a dictionary with the set information to append to match dataframe
     single_set_info = {'Set_number': set_count,
@@ -211,19 +271,46 @@ for set in reversed(sets):
                 serving = "Guest"
             except NoSuchElementException:
                 serving = "Host"
-            try:  # If the point is an ace:
-                ace = point.find_element(By.XPATH, ".//span[@class='play-type']").text
-                if ace == "- SERVE":
-                    serve_effect = "ace"
-            except NoSuchElementException:
-                pass
-            try:  # Check the receiver of the serve:
+
+            try:  # Check the serve receive information:
                 receiver = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
                     find_element(By.XPATH, ".//p[@class='shirt-number']").text
                 receive_skill = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
                     find_element(By.XPATH, ".//span[@class='skill']").text
                 receive_effect = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
-                    find_element(By.XPATH, ".//span[@class='effect']").text
+                    find_element(By.XPATH, ".//span[@class='effect']").text.strip()
+                # Clasify the serve receive effect:
+                if receive_effect == "perfect":
+                    if serving == "Host":
+                        host_receive_perfect += 1
+                    else:
+                        guest_receive_perfect += 1
+                elif receive_effect == "positive":
+                    if serving == "Host":
+                        host_receive_positive += 1
+                    else:
+                        guest_receive_positive += 1
+                elif receive_effect == "near 10ft line":
+                    if serving == "Host":
+                        host_receive_near_10_feet_line += 1
+                    else:
+                        guest_receive_near_10_feet_line += 1
+                elif receive_effect == "negative":
+                    if serving == "Host":
+                        host_receive_negative += 1
+                    else:
+                        guest_receive_negative += 1
+                elif receive_effect == "ball returns":
+                    if serving == "Host":
+                        host_receive_ball_returned += 1
+                    else:
+                        guest_receive_ball_returned += 1
+                elif receive_effect == "error":
+                    if serving == "Host":
+                        host_receive_errors += 1
+                    else:
+                        guest_receive_errors += 1
+
 
             except NoSuchElementException:
                 receiver = None
@@ -235,18 +322,47 @@ for set in reversed(sets):
                                               './/div[contains(@class, "rally-playrow-play-by-play") or contains('
                                               '@class, "rally-playrow-play-by-play right")]')
                 net_crossings = 0
-                current_touch = serving
-                last_touch = serving
+                current_side = serving
+                last_touch_side = serving
+                last_touch = None
 
+                # Calculating net crossings and attack errors looping through the touches:
                 for touch in touches:
                     class_name = touch.get_attribute("class")
                     if "right" in class_name:
-                        current_touch = "Guest"
+                        current_side = "Guest"
+                        if touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Attack":
+                            guest_attacks += 1
+                            if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                guest_attack_errors += 1
+                        elif touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Serve":
+                            guest_serves += 1
+                            if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                guest_serve_errors += 1
                     else:
-                        current_touch = "Host"
-                    if current_touch != last_touch:
+                        current_side = "Host"
+                        if touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Attack":
+                            host_attacks += 1
+                            if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                guest_attack_errors += 1
+                        elif touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Serve":
+                            host_serves += 1
+                            if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                host_serve_errors += 1
+
+                    if current_side == last_touch_side and last_touch == "Block":
+                        if current_side == "Host":
+                            host_block_convertible += 1
+                        else:
+                            guest_block_convertible += 1
+                    if touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Block":
+                        last_touch = "Block"
+                    else:
+                        last_touch = "Other"
+                    if current_side != last_touch_side:
                         net_crossings += 1
-                    last_touch = current_touch
+                    last_touch_side = current_side
+
                 if touch.find_element(By.XPATH, ".//span[@class='skill']").text in ["Attack", "Block"] and \
                         touch.find_element(By.XPATH, ".//span[@class='effect']").text != "error":
                     net_crossings += 1
@@ -254,6 +370,40 @@ for set in reversed(sets):
             except NoSuchElementException:
                 print("No right class")
                 net_crossings = None
+
+            # Checking final effect of the point:
+            try:
+                final_effect = point.find_element(By.XPATH,
+                                                  ".//div[contains(@class, 'rally-final-playrow-play-by-play')]")
+                description = final_effect.find_element(By.XPATH, ".//span[@class='description']").text.strip()
+                play_type = final_effect.find_element(By.XPATH, ".//span[@class='play-type']").text.strip()
+                if "right" in final_effect.get_attribute("class"):
+                    scored = "Guest"
+                else:
+                    scored = "Host"
+                if description == "PLAYER SCORED" and play_type == "- ATTACK":
+                    if scored == "Host":
+                        host_attacks_scored += 1
+                    else:
+                        guest_attacks_scored += 1
+                elif description == "PLAYER SCORED" and play_type == "- BLOCK":
+                    if scored == "Host":
+                        host_block_scored += 1
+                        guest_attacks_blocked += 1
+                    else:
+                        guest_block_scored += 1
+                        host_attacks_blocked += 1
+                elif description == "PLAYER SCORED" and play_type == "- SERVE":
+                    if scored == "Host":
+                        host_serve_aces += 1
+                    else:
+                        guest_serve_aces += 1
+                else:
+                    print("difference for", description, play_type, "in set", set_count, 'of match', url)
+
+            except NoSuchElementException:
+                final_effect = None
+
             # create a dictionary with the point information to append to set dataframe
             single_point_info = {'Current_point_score_host': host_score,
                                  'Current_point_score_guest': guest_score,
@@ -269,10 +419,41 @@ for set in reversed(sets):
                                  'Current_timeouts_host': Timeouts_host,
                                  'Current_timeouts_guest': Timeouts_guest,
                                  'Current_challenges_host': Challenges_host,
-                                 'Current_challenges_guest': Challenges_guest}
+                                 'Current_challenges_guest': Challenges_guest,
+                                 'Current_host_serves': host_serves,
+                                 'Current_host_serve_aces': host_serve_aces,
+                                 'Current_host_serve_errors': host_serve_errors,
+                                 'Current_host_receive_perfect': host_receive_perfect,
+                                 'Current_host_receive_positive': host_receive_positive,
+                                 'Current_host_receive_near_10_feet_line': host_receive_near_10_feet_line,
+                                 'Current_host_receive_negative': host_receive_negative,
+                                 'Current_host_receive_ball_returned': host_receive_ball_returned,
+                                 'Current_host_receive_errors': host_receive_errors,
+                                 'Current_host_attacks': host_attacks,
+                                 'Current_host_attack_errors': host_attack_errors,
+                                 'Current_host_attacks_blocked': host_attacks_blocked,
+                                 'Current_host_attacks_scored': host_attacks_scored,
+                                 'Current_host_block_scored': host_block_scored,
+                                 'Current_host_block_convertible': host_block_convertible,
+                                 'Current_guest_serves': guest_serves,
+                                 'Current_guest_serve_aces': guest_serve_aces,
+                                 'Current_guest_serve_errors': guest_serve_errors,
+                                 'Current_guest_receive_perfect': guest_receive_perfect,
+                                 'Current_guest_receive_positive': guest_receive_positive,
+                                 'Current_guest_receive_near_10_feet_line': guest_receive_near_10_feet_line,
+                                 'Current_guest_receive_negative': guest_receive_negative,
+                                 'Current_guest_receive_ball_returned': guest_receive_ball_returned,
+                                 'Current_guest_receive_errors': guest_receive_errors,
+                                 'Current_guest_attacks': guest_attacks,
+                                 'Current_guest_attack_errors': guest_attack_errors,
+                                 'Current_guest_attacks_blocked': guest_attacks_blocked,
+                                 'Current_guest_attacks_scored': guest_attacks_scored,
+                                 'Current_guest_block_points': guest_block_scored,
+                                 'Current_guest_block_convertible': guest_block_convertible,
+                                 }
 
             single_point_info = dict(single_point_info, **single_set_info, **single_match_info)
-            print(single_point_info)
+            # print(single_point_info)
             match_dataframe.loc[len(match_dataframe)] = single_point_info
 
         except NoSuchElementException:
@@ -309,14 +490,14 @@ for set in reversed(sets):
 # 1. create frames for each point            Done
 # 2. create frames for each set              Done
 # 3. create frames for each match            Done
-# 4. Handle "No score" exception -> subs
+# 4. Handle "No score" exception -> subs     no subs
 # 5. Handle timeouts                         Done
 # 6. Create touches dict
-# 7. Create table position
+# 7. Create table position                   Done
 # 8. Maybe create recent form?
 # 9. Games crawler
-#
-
+# 10. Create historical matches comparison
+# 11. Add serve errors and serves to dataframes Done
 
 match_dataframe.to_csv('Matches.csv', index=False)
 

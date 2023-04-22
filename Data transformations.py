@@ -30,18 +30,13 @@ merged_df['Max_point_difference_throughout_match'] = merged_df.groupby(['MatchID
 merged_df['Min_point_difference_throughout_match'] = merged_df.groupby(['MatchID'])['Current_point_difference'].rolling(
     window=10000, min_periods=1).min().values
 
-# Calculate cumulative count of serves for each team:
-merged_df['Cumulative_serving_host'] = merged_df.groupby(['MatchID'])['Serving_team'].transform(
-    lambda x: x.eq('Host').cumsum())
-merged_df['Cumulative_serving_guest'] = merged_df.groupby(['MatchID'])['Serving_team'].transform(
-    lambda x: x.eq('Guest').cumsum())
+# Calculate the sum of receives for each team:
+merged_df['Current_host_receives'] = merged_df[[col for col in merged_df.columns if
+                                                col.startswith('Current_host_receive')]].sum(axis=1)
+merged_df['Current_guest_receives'] = merged_df[[col for col in merged_df.columns if
+                                                col.startswith('Current_guest_receive')]].sum(axis=1)
 
-# Calculate cumulative count of error serves for both teams :
-merged_df['Cumulative_serving_host_errors'] = (merged_df['Serving_team'] + merged_df['Serve_effect'])
-merged_df['Cumulative_serving_guest_errors'] = merged_df.groupby(['MatchID', 'Set_number'])[
-    'Cumulative_serving_host_errors'].transform(lambda x: x.eq("Guesterror").cumsum())
-merged_df['Cumulative_serving_host_errors'] = merged_df.groupby(['MatchID', 'Set_number'])[
-    'Cumulative_serving_host_errors'].transform(lambda x: x.eq("Hosterror").cumsum())
+# Calculate the form stats - serve effectiveness, positive_reception_ratio, perfect reception ratio, attack accuracy, attack effectiveness:
 
 # Save the dataframe to a csv file:
 merged_df.to_csv('Plusliga_data.csv', index=False)
