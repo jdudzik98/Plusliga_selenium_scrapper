@@ -1,78 +1,16 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-
-from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import pandas as pd
 from tqdm import tqdm
-
+import csv
+import time
 # Create a dataframe:
-match_dataframe = pd.DataFrame({'MatchID': [],  # Match url
-                                'Set_number': [],  # Set number
-                                'Date': [],  # Date of the match
-                                'Year': [],  # Year of the match
-                                'Phase': [],  # Phase of the match
-                                'Round': [],  # Round of the match
-                                'Spectators': [],  # Number of spectators
-                                'Capacity': [],  # Capacity of the hall
-                                'Team1_href': [],  # Team 1
-                                'Team2_href': [],  # Team 2
-                                # 'Players': [], # Currently unused
-                                'Current_set_score_host': [],
-                                'Current_set_score_guest': [],
-                                'Final_point_score_host': [],
-                                'Final_point_score_guest': [],
-                                'Before_set_score_host': [],
-                                'Before_set_score_guest': [],
-                                'Current_point_score_host': [],
-                                'Current_point_score_guest': [],
-                                'Serving_team': [],
-                                # 'Serving_player_number': [], # Currently unused
-                                'Serve_result': [],
-                                'Serve_effect': [],
-                                # 'Receiver_player_number': [], # Currently unused
-                                'Receive_skill': [],
-                                'Receive_effect': [],
-                                'Current_host_serves': [],
-                                'Current_host_serve_aces': [],
-                                'Current_host_serve_errors': [],
-                                'Current_host_receive_perfect': [],
-                                'Current_host_receive_positive': [],
-                                'Current_host_receive_near_10_feet_line': [],
-                                'Current_host_receive_negative': [],
-                                'Current_host_receive_ball_returned': [],
-                                'Current_host_receive_errors': [],
-                                'Current_host_attacks': [],
-                                'Current_host_attack_errors': [],
-                                'Current_host_attacks_blocked': [],
-                                'Current_host_attacks_scored': [],
-                                'Current_host_block_scored': [],
-                                'Current_host_block_convertible': [],
-                                'Current_guest_serves': [],
-                                'Current_guest_serve_aces': [],
-                                'Current_guest_serve_errors': [],
-                                'Current_guest_receive_perfect': [],
-                                'Current_guest_receive_positive': [],
-                                'Current_guest_receive_near_10_feet_line': [],
-                                'Current_guest_receive_negative': [],
-                                'Current_guest_receive_ball_returned': [],
-                                'Current_guest_receive_errors': [],
-                                'Current_guest_attacks': [],
-                                'Current_guest_attack_errors': [],
-                                'Current_guest_attacks_blocked': [],
-                                'Current_guest_attacks_scored': [],
-                                'Current_guest_block_points': [],
-                                'Current_guest_block_convertible': [],
-                                'Net_crossings_number': [],
-                                'Point_winner_team': [],
-                                'Current_timeouts_host': [],
-                                'Current_timeouts_guest': [],
-                                'Current_challenges_host': [],
-                                'Current_challenges_guest': []})
+
+match_list = []
 
 # Read the match_links.csv file:
 match_links = pd.read_csv('Matches_links2020_copy.csv', header=None).values.tolist()
@@ -81,11 +19,11 @@ service = Service(executable_path='./chromedriver')
 
 # Set the options for the Chrome browser
 options = webdriver.ChromeOptions()
-#options.add_argument('--headless')
+# options.add_argument('--headless')  # this option extends execution time
 driver = webdriver.Chrome(service=service, options=options)
 
+for year, url in tqdm(match_links[0:3]):
 
-for year, url in tqdm(match_links):
     driver.get(url)
 
     # Fetch match information:
@@ -118,8 +56,9 @@ for year, url in tqdm(match_links):
     except NoSuchElementException:
         Capacity = None
 
+
     try:
-        href_elements = driver.find_element(By.XPATH, "//div[@class='row text-center gridtable games']").\
+        href_elements = driver.find_element(By.XPATH, "//div[@class='row text-center gridtable games']"). \
             find_elements(By.XPATH, ".//a[@href]")
         href_list = [elem.get_attribute('href') for elem in href_elements]
         unique_href_list = href_list[1:3]
@@ -154,19 +93,7 @@ for year, url in tqdm(match_links):
         players = None
         print("Couldn't find players")
     """
-    # create a dictionary with the match data:
-    single_match_info = {'MatchID': url,  # Match url
-                         'Date': Date,  # Date of the match
-                         'Year': year,  # Year of the match
-                         'Phase': Phase,  # Phase of the match
-                         'Round': Round,  # Round of the match
-                         'Spectators': Spectators,  # Number of spectators
-                         'Capacity': Capacity,  # Capacity of the hall
-                         'Team1_href': unique_href_list[0],  # Team 1
-                         'Team2_href': unique_href_list[1],  # Team 2
-                         # 'Players': players
-                         }
-
+    time2 = time.time()
     # Iterate over points:
     if year == 2020:
         driver.switch_to.frame(0)
@@ -177,7 +104,8 @@ for year, url in tqdm(match_links):
     wait = WebDriverWait(driver, 10)
     element = wait.until(EC.visibility_of_element_located((By.XPATH, "//div[@class='play-by-play-container']")))
 
-    sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']").find_elements(By.XPATH, ".//div[@class='events-container']")
+    sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']").find_elements(By.XPATH,
+                                                                                                 ".//div[@class='events-container']")
 
     # Creating match variables:
     set_count = 0
@@ -244,14 +172,6 @@ for year, url in tqdm(match_links):
         guest_team = squads.find_element(By.XPATH, ".//div[@class='team right']"). \
             find_elements(By.XPATH, ".//span[@class='player-nr']")
         """
-        # create a dictionary with the set information to append to match dataframe
-        single_set_info = {'Set_number': set_count,
-                           'Current_set_score_host': set_score_host,
-                           'Current_set_score_guest': set_score_guest,
-                           'Final_point_score_host': point_score_host,
-                           'Final_point_score_guest': point_score_guest,
-                           'Before_set_score_host': set_score_host_before,
-                           'Before_set_score_guest': set_score_guest_before}
 
         # Fetch points:
         play_by_play = set.find_elements(By.XPATH, ".//div[@class='w100']")
@@ -413,7 +333,23 @@ for year, url in tqdm(match_links):
                     final_effect = None
 
                 # create a dictionary with the point information to append to set dataframe
-                single_point_info = {'Current_point_score_host': host_score,
+                single_point_info = {'MatchID': url,  # Match url
+                                     'Date': Date,  # Date of the match
+                                     'Year': year,  # Year of the match
+                                     'Phase': Phase,  # Phase of the match
+                                     'Round': Round,  # Round of the match
+                                     'Spectators': Spectators,  # Number of spectators
+                                     'Capacity': Capacity,  # Capacity of the hall
+                                     'Team1_href': unique_href_list[0],  # Team 1
+                                     'Team2_href': unique_href_list[1],
+                                     'Set_number': set_count,
+                                     'Current_set_score_host': set_score_host,
+                                     'Current_set_score_guest': set_score_guest,
+                                     'Final_point_score_host': point_score_host,
+                                     'Final_point_score_guest': point_score_guest,
+                                     'Before_set_score_host': set_score_host_before,
+                                     'Before_set_score_guest': set_score_guest_before,
+                                     'Current_point_score_host': host_score,
                                      'Current_point_score_guest': guest_score,
                                      'Serving_team': serving,
                                      'Serve_result': serve_result,
@@ -458,8 +394,9 @@ for year, url in tqdm(match_links):
                                      'Current_guest_block_convertible': guest_block_convertible
                                      }
 
-                single_point_info = dict(single_point_info, **single_set_info, **single_match_info)
-                match_dataframe.loc[len(match_dataframe)] = single_point_info
+                match_list.append(single_point_info)
+
+
 
             except NoSuchElementException:
                 try:
@@ -486,7 +423,6 @@ for year, url in tqdm(match_links):
                     except NoSuchElementException:
                         pass
 
-
 # TODO list:
 # 1. create frames for each point               Done
 # 2. create frames for each set                 Done
@@ -502,6 +438,22 @@ for year, url in tqdm(match_links):
 
 # Close browser:
 driver.quit()
-match_dataframe.to_csv('Matches2020.csv', index=False)
+fieldnames = ['MatchID', 'Set_number', 'Date', 'Year', "Phase", "Round", "Spectators", "Capacity", "Team1_href", "Team2_href",
+              "Current_set_score_host", "Current_set_score_guest", "Final_point_score_host", "Final_point_score_guest",
+                "Before_set_score_host", "Before_set_score_guest", "Current_point_score_host", "Current_point_score_guest",
+                "Serving_team", "Serve_result", "Serve_effect", "Receive_skill", "Receive_effect", 'Current_host_serves',
+                'Current_host_serve_aces', 'Current_host_serve_errors', 'Current_host_receive_perfect', 'Current_host_receive_positive',
+                'Current_host_receive_near_10_feet_line', 'Current_host_receive_negative', 'Current_host_receive_ball_returned',
+                'Current_host_receive_errors', 'Current_host_attacks', 'Current_host_attack_errors', 'Current_host_attacks_blocked',
+                'Current_host_attacks_scored', 'Current_host_block_scored', 'Current_host_block_convertible', 'Current_guest_serves',
+                'Current_guest_serve_aces', 'Current_guest_serve_errors', 'Current_guest_receive_perfect', 'Current_guest_receive_positive',
+                'Current_guest_receive_near_10_feet_line', 'Current_guest_receive_negative', 'Current_guest_receive_ball_returned',
+                'Current_guest_receive_errors', 'Current_guest_attacks', 'Current_guest_attack_errors', 'Current_guest_attacks_blocked',
+                'Current_guest_attacks_scored', 'Current_guest_block_points', 'Current_guest_block_convertible', 'Net_crossings_number',
+                'Point_winner_team', 'Current_timeouts_host', 'Current_timeouts_guest', 'Current_challenges_host', 'Current_challenges_guest']
 
-
+# Write data to CSV
+with open("Matches.csv", "w", newline="") as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(match_list)
