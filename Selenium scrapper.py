@@ -1,4 +1,7 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
@@ -73,8 +76,16 @@ match_dataframe = pd.DataFrame({'MatchID': [],  # Match url
 
 # Read the match_links.csv file:
 match_links = pd.read_csv('Matches_links2020_copy.csv', header=None).values.tolist()
+# Create a Service object using the path to the chromedriver executable
+service = Service(executable_path='./chromedriver')
+
+# Set the options for the Chrome browser
+options = webdriver.ChromeOptions()
+#options.add_argument('--headless')
+driver = webdriver.Chrome(service=service, options=options)
+
+
 for year, url in tqdm(match_links):
-    driver = webdriver.Chrome('./chromedriver')
     driver.get(url)
 
     # Fetch match information:
@@ -116,15 +127,6 @@ for year, url in tqdm(match_links):
     except NoSuchElementException:
         unique_href_list = None
 
-
-    try:
-        elements = driver.find_elements(By.XPATH,
-                                        "//div[@class='row text-center gridtable games']//span[contains(concat(' ', "
-                                        "normalize-space(@class), ' '), 'green') or contains(concat(' ', "
-                                        "normalize-space(@class), ' '), 'red')]")
-        result = [elem.text for elem in elements]
-    except NoSuchElementException:
-        result = None
     # Unused list of players - required for future purposes of counting single players stats
     """
     try:
@@ -174,7 +176,6 @@ for year, url in tqdm(match_links):
     # Wait for the element to be visible on the page
     wait = WebDriverWait(driver, 10)
     element = wait.until(EC.visibility_of_element_located((By.XPATH, "//div[@class='play-by-play-container']")))
-
 
     sets = driver.find_element(By.XPATH, "//div[@class='play-by-play-container']").find_elements(By.XPATH, ".//div[@class='events-container']")
 
@@ -258,7 +259,6 @@ for year, url in tqdm(match_links):
             try:
                 host_score = point.find_element(By.XPATH, ".//span[contains(@class, 'left')]").text
                 guest_score = point.find_element(By.XPATH, ".//span[contains(@class, 'right')]").text
-                serving_player = point.find_element(By.XPATH, ".//p[@class='shirt-number']").text
                 serve_result = point.find_element(By.XPATH, ".//span[@class='skill']").text
                 serve_effect = point.find_element(By.XPATH, ".//span[@class='effect']").text
 
@@ -278,8 +278,6 @@ for year, url in tqdm(match_links):
                     serving = "Host"
 
                 try:  # Check the serve receive information:
-                    receiver = point.find_element(By.XPATH, ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
-                        find_element(By.XPATH, ".//p[@class='shirt-number']").text
                     receive_skill = point.find_element(By.XPATH,
                                                        ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
                         find_element(By.XPATH, ".//span[@class='skill']").text
@@ -335,25 +333,30 @@ for year, url in tqdm(match_links):
 
                     for touch in touches:
                         class_name = touch.get_attribute("class")
+                        skill_element = touch.find_element(By.XPATH, ".//span[@class='skill']")
+                        skill_text = skill_element.text.strip()
+                        effect_element = touch.find_element(By.XPATH, ".//span[@class='effect']")
+                        effect_text = effect_element.text.strip()
+
                         if "right" in class_name:
                             current_side = "Guest"
-                            if touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Attack":
+                            if skill_text == "Attack":
                                 guest_attacks += 1
-                                if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                if effect_text == "error":
                                     guest_attack_errors += 1
-                            elif touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Serve":
+                            elif skill_text == "Serve":
                                 guest_serves += 1
-                                if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                if effect_text == "error":
                                     guest_serve_errors += 1
                         else:
                             current_side = "Host"
-                            if touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Attack":
+                            if skill_text == "Attack":
                                 host_attacks += 1
-                                if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
-                                    guest_attack_errors += 1
-                            elif touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Serve":
+                                if effect_text == "error":
+                                    host_attack_errors += 1
+                            elif skill_text == "Serve":
                                 host_serves += 1
-                                if touch.find_element(By.XPATH, ".//span[@class='effect']").text.strip() == "error":
+                                if effect_text == "error":
                                     host_serve_errors += 1
 
                         if current_side == last_touch_side and last_touch == "Block":
@@ -361,7 +364,7 @@ for year, url in tqdm(match_links):
                                 host_block_convertible += 1
                             else:
                                 guest_block_convertible += 1
-                        if touch.find_element(By.XPATH, ".//span[@class='skill']").text.strip() == "Block":
+                        if skill_text == "Block":
                             last_touch = "Block"
                         else:
                             last_touch = "Other"
@@ -369,8 +372,7 @@ for year, url in tqdm(match_links):
                             net_crossings += 1
                         last_touch_side = current_side
 
-                    if touch.find_element(By.XPATH, ".//span[@class='skill']").text in ["Attack", "Block"] and \
-                            touch.find_element(By.XPATH, ".//span[@class='effect']").text != "error":
+                    if skill_text in ["Attack", "Block"] and effect_text != "error":
                         net_crossings += 1
 
                 except NoSuchElementException:
@@ -414,10 +416,8 @@ for year, url in tqdm(match_links):
                 single_point_info = {'Current_point_score_host': host_score,
                                      'Current_point_score_guest': guest_score,
                                      'Serving_team': serving,
-                                     'Serving_player_number': serving_player,
                                      'Serve_result': serve_result,
                                      'Serve_effect': serve_effect,
-                                     'Receiver_player_number': receiver,
                                      'Receive_skill': receive_skill,
                                      'Receive_effect': receive_effect,
                                      'Net_crossings_number': net_crossings,
