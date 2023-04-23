@@ -45,3 +45,5 @@ merged_df.to_csv('Plusliga_data.csv', index=False)
 # 1. Add the last 5 matches results for each team
 # 2. Add the recent form - last 5 receptions, last 5 serves, last 5 points
 # 3. Add the maximal point difference in the set and match      DONE
+# 4. When the phase == playoff, change it to last round of the regular season
+
