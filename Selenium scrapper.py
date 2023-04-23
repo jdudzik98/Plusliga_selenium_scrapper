@@ -396,8 +396,6 @@ for year, url in tqdm(match_links[0:3]):
 
                 match_list.append(single_point_info)
 
-
-
             except NoSuchElementException:
                 try:
                     challenge = point.find_element(By.XPATH,

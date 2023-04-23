@@ -106,7 +106,26 @@ for year in tqdm(range(2019, 2022)):
             print('not clicked round')
             pass
 
+# Add rows to handle play-off phase:
+new_df = pd.DataFrame(columns=df.columns)
+# Loop over each year in the DataFrame
+for year in df['Year'].unique():
+
+    # Get the maximum round for the year
+    max_round = df.loc[df['Year'] == year, 'Round'].max()
+
+    # Append the rows with the maximum round to the new DataFrame
+    new_df = pd.concat([new_df, df.loc[(df['Year'] == year) & (df['Round'] == max_round)]])
+
+    # Duplicate the rows with the maximum round and change the Round value to NaN
+    max_round_rows = df.loc[(df['Year'] == year) & (df['Round'] == max_round)].copy()
+    max_round_rows['Round'] = None
+
+    # Append the duplicated rows to the new DataFrame
+    new_df = pd.concat([new_df, max_round_rows])
+
+
 # Save the dataframe to a csv file:
-df.to_csv('table_standings.csv', index=False)
+new_df.to_csv('table_standings.csv', index=False)
 # Close browser:
 driver.quit()
