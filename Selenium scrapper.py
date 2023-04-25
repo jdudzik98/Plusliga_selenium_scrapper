@@ -6,11 +6,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
 import csv
-import time
 
 # Read the match_links.csv file:
 match_links = []
-with open("Matches_links.csv", "r") as file:
+with open("Matches_links", "r") as file:
     reader = csv.reader(file, delimiter=",")
     for row in reader:
         match_links.append([int(row[0]), row[1]])
@@ -21,7 +20,14 @@ match_list = []
 
 # Divide the list of match links into 6 batches:
 
-batch_number = 1
+valid_input = False
+while not valid_input:
+    batch_number = input("Enter batch number: ")
+    if batch_number in ["1", "2", "3", "4", "5", "6"]:
+        valid_input = True
+    else:
+        print("Invalid input. Please enter a number between 1 and 6.")
+batch_number = int(batch_number)
 batch_size = len(match_links) // 6  # Determine the size of each batch
 start_index = (batch_number - 1) * batch_size  # Determine the starting index of the batch
 end_index = start_index + batch_size  # Determine the ending index of the batch
@@ -29,7 +35,7 @@ end_index = start_index + batch_size  # Determine the ending index of the batch
 if batch_number == 6:
     end_index = len(match_links)  # Make sure the last batch includes any leftover items
 
-selected_batch = match_links[start_index:end_index]  # Select the items in the batch
+match_links = match_links[start_index:end_index]  # Select the items in the batch
 
 # Create a Service object using the path to the chromedriver executable
 service = Service(executable_path='./chromedriver')
@@ -419,8 +425,7 @@ fieldnames = ['MatchID', 'Set_number', 'Date', 'Year', "Phase", "Round", "Specta
               'Point_winner_team', 'Current_timeouts_host', 'Current_timeouts_guest', 'Current_challenges_host',
               'Current_challenges_guest']
 
-# Write data to CSV
-with open("Matches.csv", "w", newline="") as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+with open(f"Matches_batch{batch_number}.csv", "w", newline="") as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=["a","b"])
     writer.writeheader()
     writer.writerows(match_list)
