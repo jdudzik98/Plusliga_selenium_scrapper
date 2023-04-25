@@ -9,7 +9,7 @@ import csv
 
 # Read the match_links.csv file:
 match_links = []
-with open("Matches_links", "r") as file:
+with open("Matches_links.csv", "r") as file:
     reader = csv.reader(file, delimiter=",")
     for row in reader:
         match_links.append([int(row[0]), row[1]])
@@ -426,6 +426,6 @@ fieldnames = ['MatchID', 'Set_number', 'Date', 'Year', "Phase", "Round", "Specta
               'Current_challenges_guest']
 
 with open(f"Matches_batch{batch_number}.csv", "w", newline="") as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=["a","b"])
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(match_list)
