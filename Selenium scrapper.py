@@ -14,7 +14,6 @@ with open("Matches_links.csv", "r") as file:
     for row in reader:
         match_links.append([int(row[0]), row[1]])
 
-
 # Create a list to store the match information:
 match_list = []
 
@@ -228,8 +227,8 @@ for year, url in tqdm(match_links[0:1]):
                     # Calculate net crossing and attack/block stats looping through the touches:
                     try:
                         touches = point.find_elements(By.XPATH,
-                                                      './/div[contains(@class, "rally-playrow-play-by-play") or contains('
-                                                      '@class, "rally-playrow-play-by-play right")]')
+                                                      './/div[contains(@class, "rally-playrow-play-by-play") or '
+                                                      'contains(@class, "rally-playrow-play-by-play right")]')
                         net_crossings = 0
                         current_side = serving
                         last_touch_side = serving
@@ -399,8 +398,8 @@ for year, url in tqdm(match_links[0:1]):
                                                                    "contains(@class, 'time-out-play-by-play')]")
                             try:
                                 timeout = point.find_element(By.XPATH,
-                                    ".//div[@class='time-out-play-by-play event-play-by-play right' or "
-                                    "@class='timeout-play-by-play event-play-by-play right']")
+                                                             ".//div[@class='time-out-play-by-play event-play-by-play right' or "
+                                                             "@class='timeout-play-by-play event-play-by-play right']")
                                 Timeouts_guest += 1
                             except NoSuchElementException:
                                 Timeouts_host += 1
@@ -409,8 +408,6 @@ for year, url in tqdm(match_links[0:1]):
     except TimeoutException:
         print("Failed URL: ", url)
         continue
-
-
 
 # Close browser:
 driver.quit()
