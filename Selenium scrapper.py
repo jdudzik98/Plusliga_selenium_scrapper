@@ -244,39 +244,39 @@ for year, url in tqdm(match_links[0:1]):
 
                             if "right" in class_name:
                                 current_side = "Guest"
-                                if skill_text == "Attack":
+                                if skill_text == "attack":
                                     guest_attacks += 1
                                     if effect_text == "error":
                                         guest_attack_errors += 1
-                                elif skill_text == "Serve":
+                                elif skill_text == "serve":
                                     guest_serves += 1
                                     if effect_text == "error":
                                         guest_serve_errors += 1
                             else:
                                 current_side = "Host"
-                                if skill_text == "Attack":
+                                if skill_text == "attack":
                                     host_attacks += 1
                                     if effect_text == "error":
                                         host_attack_errors += 1
-                                elif skill_text == "Serve":
+                                elif skill_text == "serve":
                                     host_serves += 1
                                     if effect_text == "error":
                                         host_serve_errors += 1
 
-                            if current_side == last_touch_side and last_touch == "Block":
+                            if current_side == last_touch_side and last_touch == "block":
                                 if current_side == "Host":
                                     host_block_convertible += 1
                                 else:
                                     guest_block_convertible += 1
-                            if skill_text == "Block":
-                                last_touch = "Block"
+                            if skill_text == "block":
+                                last_touch = "block"
                             else:
-                                last_touch = "Other"
+                                last_touch = "other"
                             if current_side != last_touch_side:
                                 net_crossings += 1
                             last_touch_side = current_side
 
-                        if skill_text in ["Attack", "Block"] and effect_text != "error":
+                        if skill_text in ["attack", "block"] and effect_text != "error":
                             net_crossings += 1
 
                     except NoSuchElementException:
