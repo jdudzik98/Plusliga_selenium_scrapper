@@ -45,7 +45,7 @@ options = webdriver.ChromeOptions()
 # options.add_argument('--headless')  # this option extends execution time
 driver = webdriver.Chrome(service=service, options=options)
 
-for year, url in tqdm(match_links):
+for year, url in tqdm(match_links[0:1]):
     driver.get(url)
 
     # Fetch match information:
@@ -164,8 +164,8 @@ for year, url in tqdm(match_links):
                 try:
                     host_score = point.find_element(By.XPATH, ".//span[contains(@class, 'left')]").text
                     guest_score = point.find_element(By.XPATH, ".//span[contains(@class, 'right')]").text
-                    serve_result = point.find_element(By.XPATH, ".//span[@class='skill']").text
-                    serve_effect = point.find_element(By.XPATH, ".//span[@class='effect']").text
+                    serve_result = point.find_element(By.XPATH, ".//span[@class='skill']").text.lower()
+                    serve_effect = point.find_element(By.XPATH, ".//span[@class='effect']").text.lower()
 
                     # Check which team scored the point
                     try:
@@ -185,10 +185,10 @@ for year, url in tqdm(match_links):
                     try:  # Check the serve receive information:
                         receive_skill = point.find_element(By.XPATH,
                                                            ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
-                            find_element(By.XPATH, ".//span[@class='skill']").text
+                            find_element(By.XPATH, ".//span[@class='skill']").text.strip().lower()
                         receive_effect = point.find_element(By.XPATH,
                                                             ".//div[contains(@class, 'plays-play-by-play')]/*[2]"). \
-                            find_element(By.XPATH, ".//span[@class='effect']").text.strip()
+                            find_element(By.XPATH, ".//span[@class='effect']").text.strip().lower()
                         # Classify the serve receive effect:
                         if receive_effect == "perfect":
                             if serving == "Host":
@@ -238,9 +238,9 @@ for year, url in tqdm(match_links):
                         for touch in touches:
                             class_name = touch.get_attribute("class")
                             skill_element = touch.find_element(By.XPATH, ".//span[@class='skill']")
-                            skill_text = skill_element.text.strip()
+                            skill_text = skill_element.text.strip().lower()
                             effect_element = touch.find_element(By.XPATH, ".//span[@class='effect']")
-                            effect_text = effect_element.text.strip()
+                            effect_text = effect_element.text.strip().lower()
 
                             if "right" in class_name:
                                 current_side = "Guest"
