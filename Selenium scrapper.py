@@ -395,12 +395,12 @@ for year, url in tqdm(match_links):
 
                     except NoSuchElementException:
                         try:
-                            timeout = point.find_element(By.XPATH, ".//div[contains(@class, 'timeout-play-by-play') "
-                                                                   "or contains('@class, 'time-out-play-by-play')]")
+                            timeout = point.find_element(By.XPATH, ".//div[contains(@class, 'timeout-play-by-play') or "
+                                                                   "contains(@class, 'time-out-play-by-play')]")
                             try:
                                 timeout = point.find_element(By.XPATH,
-                                                             ".//div[@class='time-out-play-by-play event-play-by-play right' "
-                                                             "or @class='timeout-play-by-play event-play-by-play right']")
+                                    ".//div[@class='time-out-play-by-play event-play-by-play right' or "
+                                    "@class='timeout-play-by-play event-play-by-play right']")
                                 Timeouts_guest += 1
                             except NoSuchElementException:
                                 Timeouts_host += 1
