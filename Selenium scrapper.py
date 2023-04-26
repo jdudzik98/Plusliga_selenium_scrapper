@@ -44,7 +44,7 @@ options = webdriver.ChromeOptions()
 # options.add_argument('--headless')  # this option extends execution time
 driver = webdriver.Chrome(service=service, options=options)
 
-for year, url in tqdm(match_links[0:1]):
+for year, url in tqdm(match_links):
     driver.get(url)
 
     # Fetch match information:
