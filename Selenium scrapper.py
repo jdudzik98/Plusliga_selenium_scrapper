@@ -1,6 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -224,6 +224,7 @@ for year, url in tqdm(match_links):
                         receive_skill = None
                         receive_effect = None
 
+
                     # Calculate net crossing and attack/block stats looping through the touches:
                     try:
                         touches = point.find_elements(By.XPATH,
@@ -406,6 +407,9 @@ for year, url in tqdm(match_links):
                         except NoSuchElementException:
                             pass
     except TimeoutException:
+        print("Failed URL: ", url)
+        continue
+    except StaleElementReferenceException:
         print("Failed URL: ", url)
         continue
 
