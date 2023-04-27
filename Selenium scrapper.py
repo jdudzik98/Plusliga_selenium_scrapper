@@ -1,6 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, NoSuchFrameException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -412,6 +412,16 @@ for year, url in tqdm(match_links):
     except StaleElementReferenceException:
         print("Failed URL: ", url)
         continue
+    except NoSuchElementException:
+        print("Failed URL: ", url)
+        continue
+    except IndexError:
+        print("Failed URL: ", url)
+        continue
+    except NoSuchFrameException:
+        print("Failed URL: ", url)
+        continue
+
 
 # Close browser:
 driver.quit()
