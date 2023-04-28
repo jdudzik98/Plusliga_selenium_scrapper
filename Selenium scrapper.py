@@ -86,13 +86,11 @@ for year, url in tqdm(match_links):
     except NoSuchElementException:
         unique_href_list = None
 
-    # Iterate over points:
-    if year == 2020:
-        driver.switch_to.frame(0)
-    else:
-        driver.switch_to.frame(2)
-
     try:
+        if year == 2020:
+            driver.switch_to.frame(0)
+        else:
+            driver.switch_to.frame(2)
         # Wait for the element to be visible on the page
         wait = WebDriverWait(driver, 10)
         element = wait.until(EC.visibility_of_element_located((By.XPATH, "//div[@class='play-by-play-container']")))
