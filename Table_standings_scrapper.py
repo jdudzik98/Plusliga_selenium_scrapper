@@ -26,7 +26,7 @@ df = pd.DataFrame({'Year': [],
                   )
 
 # create loop to create urls for each season
-for year in tqdm(range(2019, 2022)):
+for year in tqdm(range(2020, 2023)):
     url = 'https://www.plusliga.pl/table/tour/' + str(year) + '.html'
     driver.get(url)
     # Click the cookies button:
@@ -46,7 +46,7 @@ for year in tqdm(range(2019, 2022)):
     # Click the phase button:
     try:
         wait = WebDriverWait(driver, 10)
-        element = wait.until(ec.element_to_be_clickable((By.XPATH, "//*[@id='filterContent']/div[1]/div/div/a[1]")))
+        element = wait.until(ec.element_to_be_clickable((By.XPATH, "//*[@data-name='1_sts_rs']")))
         element.click()
 
         print('clicked phase')
@@ -55,10 +55,10 @@ for year in tqdm(range(2019, 2022)):
         pass
     except TimeoutException:
         pass
-
     # Get the round buttons:
     round_buttons = driver.find_element(By.XPATH,
-                                        "//div[@class='col-xs-12 bar sort filtr fazy rundy kolejki grupa-1 faza-1']"). \
+                                        "//div[contains(@class, "
+                                        "'col-xs-12 bar sort filtr fazy rundy kolejki grupa-1 faza-1')]"). \
         find_elements(By.XPATH, ".//a")
     for round_button in tqdm(round_buttons[1:len(round_buttons)]):
         # Click the round button:
@@ -106,11 +106,12 @@ for year in tqdm(range(2019, 2022)):
             print('not clicked round')
             pass
 
+# Save the dataframe to a csv file:
+df.to_csv('table_standings_old.csv', index=False)
 # Add rows to handle play-off phase:
 new_df = pd.DataFrame(columns=df.columns)
 # Loop over each year in the DataFrame
 for year in df['Year'].unique():
-
     # Get the maximum round for the year
     max_round = df.loc[df['Year'] == year, 'Round'].max()
 
@@ -124,6 +125,8 @@ for year in df['Year'].unique():
     # Append the duplicated rows to the new DataFrame
     new_df = pd.concat([new_df, max_round_rows])
 
+# Combine the new DataFrame with the original DataFrame and remove duplicates
+new_df = pd.concat([df, new_df]).drop_duplicates(keep=False)
 
 # Save the dataframe to a csv file:
 new_df.to_csv('table_standings.csv', index=False)
