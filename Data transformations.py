@@ -1,8 +1,10 @@
 import pandas as pd
+import numpy as np
 
 # read CSV file as a dataframe
-matches = pd.read_csv('Matches.csv')
+matches = pd.read_csv('Matches_batch2.csv')
 table = pd.read_csv('Table_standings.csv')
+
 table_host = table.rename(columns={c: c + '_table_host' for c in table.columns if c not in ['Year', 'Round', 'Team']})
 table_guest = table.rename(columns={c: c + '_table_guest' for c in table.columns if c not in ['Year', 'Round', 'Team']})
 
@@ -30,7 +32,7 @@ merged_df['Max_point_difference_throughout_match'] = merged_df.groupby(['MatchID
 merged_df['Min_point_difference_throughout_match'] = merged_df.groupby(['MatchID'])['Current_point_difference'].rolling(
     window=10000, min_periods=1).min().values
 
-# Calculate the running average of the net crossings: TODO: correct this
+# Calculate the running average of the net crossings:
 merged_df['Running_net_crossings_average'] = merged_df.groupby(['MatchID'])['Net_crossings_number'].rolling(
     window=1000, min_periods=1).mean().values
 
@@ -54,10 +56,18 @@ merged_df['Current_guest_attack_accuracy'] = merged_df['Current_guest_attacks_sc
 merged_df['Current_host_attack_effectiveness'] = (merged_df['Current_host_attacks_scored']-merged_df['Current_host_attack_errors']-merged_df['Current_host_attacks_blocked'])/merged_df['Current_guest_attacks']
 merged_df['Current_guest_attack_effectiveness'] = (merged_df['Current_guest_attacks_scored']-merged_df['Current_guest_attack_errors']-merged_df['Current_guest_attacks_blocked'])/merged_df['Current_host_attacks']
 
-
-# Fill NaNs in columns from
+# Fill NaNs in columns from 90th to the end with 0:
 merged_df.iloc[:, 90:] = merged_df.iloc[:, 90:].fillna(0)
 
+# replace inf and -inf with 0
+merged_df = merged_df.replace([np.inf, -np.inf], 0)
+
+
+
+# create a Winner column with True if the maximum value is 3, and False otherwise
+
+
+merged_df['Winner'] = merged_df.groupby(['MatchID'])['Current_set_score_host'].transform(max) == 3
 # Save the dataframe to a csv file:
 merged_df.to_csv('Plusliga_data.csv', index=False)
 
@@ -67,4 +77,5 @@ merged_df.to_csv('Plusliga_data.csv', index=False)
 # 3. Add the maximal point difference in the set and match      DONE
 # 4. When the phase == playoff, change it to last round of the regular season DONE
 # 5. Review the variables and change them to running sums/averages etc.
+# 6. Add the historical matches between two teams
 
