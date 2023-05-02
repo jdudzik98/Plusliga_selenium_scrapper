@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # read CSV file as a dataframe
-matches = pd.read_csv('Matches_batch2.csv')
+matches = pd.read_csv('Matches_batch2 copy 2.csv')
 table = pd.read_csv('Table_standings.csv')
 
 table_host = table.rename(columns={c: c + '_table_host' for c in table.columns if c not in ['Year', 'Round', 'Team']})
@@ -12,6 +12,9 @@ merged_df = pd.merge(matches, table_host, left_on=['Year', 'Round', 'Team1_href'
                      right_on=['Year', 'Round', 'Team'], how='left', validate="m:1")
 merged_df = pd.merge(merged_df, table_guest, left_on=['Year', 'Round', 'Team2_href'],
                      right_on=['Year', 'Round', 'Team'], how='left', validate="m:1")
+
+# Remove the redundant columns:
+merged_df = merged_df.drop(columns=['Team_x', 'Team_y'])
 
 # Extract the hour and day of week from the date:
 merged_df['Date'] = pd.to_datetime(merged_df['Date'], dayfirst=True)
@@ -62,20 +65,53 @@ merged_df.iloc[:, 90:] = merged_df.iloc[:, 90:].fillna(0)
 # replace inf and -inf with 0
 merged_df = merged_df.replace([np.inf, -np.inf], 0)
 
-
-
 # create a Winner column with True if the maximum value is 3, and False otherwise
-
-
 merged_df['Winner'] = merged_df.groupby(['MatchID'])['Current_set_score_host'].transform(max) == 3
+
+# create a relative capacity column:
+merged_df['Relative_capacity'] = merged_df['Spectators']/merged_df['Capacity']
+
+# Add previous matches performance for last 5 matches:
+# Decrease the Round number by 5 if it is greater than 5. Decrease it to 1 in other cases:
+merged_df['Round_prev'] = np.where(merged_df['Round'] > 5, merged_df['Round'] - 5, 1)
+
+# Rename columns for old table:
+table_host = table.rename(columns={c: c + '_table_host_prev' for c in table.columns if c not in ['Year', 'Round', 'Team']})
+table_guest = table.rename(columns={c: c + '_table_guest_prev' for c in table.columns if c not in ['Year', 'Round', 'Team']})
+
+# Merge the table with itself to get the previous performance:
+merged_df = pd.merge(merged_df, table_host, left_on=['Year', 'Round_prev', 'Team1_href'],
+                     right_on=['Year', 'Round', 'Team'], how='left', validate="m:1")
+merged_df = pd.merge(merged_df, table_guest, left_on=['Year', 'Round_prev', 'Team2_href'],
+                     right_on=['Year', 'Round', 'Team'], how='left', validate="m:1")
+
+# Creating new columns for the difference between the current and previous performance:
+merged_df['Matches_ratio_last_5_host'] = merged_df['Won_matches_table_host'] - \
+                                         merged_df['Won_matches_table_host_prev']- \
+                                         merged_df['Lost_matches_table_host'] + \
+                                         merged_df['Lost_matches_table_host_prev']
+merged_df['Matches_ratio_last_5_guest'] = merged_df['Won_matches_table_guest'] - \
+                                          merged_df['Won_matches_table_guest_prev']- \
+                                          merged_df['Lost_matches_table_guest']+ \
+                                          merged_df['Lost_matches_table_guest_prev']
+
+# Removing unnecessary columns created during the merge:
+merged_df = merged_df[merged_df.columns.drop(list(merged_df.filter(regex='_prev')))]
+merged_df = merged_df.drop(['Team_y', 'Team_x', 'Round', 'Round_y'], axis=1)
+merged_df = merged_df.rename(columns={'Round_x': 'Round'})
+
+# Removing unnecessary columns from the dataframe:
+merged_df = merged_df.drop(['Date', 'Capacity', 'Current_set_score_host', 'Current_set_score_guest',
+                            'Final_point_score_host', 'Final_point_score_guest'], axis=1)
+
 # Save the dataframe to a csv file:
 merged_df.to_csv('Plusliga_data.csv', index=False)
 
 # TODO:
-# 1. Add the last 5 matches results for each team
+# 1. Add the last 5 matches results for each team DONE
 # 2. Add the recent form - last 5 receptions, last 5 serves, last 5 points - switched to running sum
 # 3. Add the maximal point difference in the set and match      DONE
 # 4. When the phase == playoff, change it to last round of the regular season DONE
-# 5. Review the variables and change them to running sums/averages etc.
+# 5. Review the variables and change them to running sums/averages etc. DONE
 # 6. Add the historical matches between two teams
 
