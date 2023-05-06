@@ -3,10 +3,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.chrome.service import Service
 import pandas as pd
 from tqdm import tqdm
 
-driver = webdriver.Chrome('./chromedriver')
+service = Service(executable_path='./chromedriver')
+
+# Set the options for the Chrome browser
+options = webdriver.ChromeOptions()
+# options.add_argument('--headless')  # this option extends execution time
+driver = webdriver.Chrome(service=service, options=options)
 
 # Create the dataframe to store the data:
 df = pd.DataFrame({'Year': [],
@@ -92,13 +98,7 @@ for year in tqdm(range(2020, 2023)):
                         'Points_won': point_info[8].text,
                         'Points_lost': point_info[9].text,
                         'Sets_ratio': point_info[10].text,
-                        'Points_ratio': point_info[11].text,
-                        '3-0 wins': point_info[12].text,
-                        '3-1 wins': point_info[13].text,
-                        '3-2 wins': point_info[14].text,
-                        '2-3 losses': point_info[15].text,
-                        '1-3 losses': point_info[16].text,
-                        '0-3 losses': point_info[17].text}
+                        'Points_ratio': point_info[11].text}
 
                 # Append the dictionary to the dataframe:
                 df.loc[len(df)] = data
@@ -106,14 +106,12 @@ for year in tqdm(range(2020, 2023)):
             print('not clicked round')
             pass
 
-# Save the dataframe to a csv file:
-df.to_csv('table_standings_old.csv', index=False)
 # Add rows to handle play-off phase:
 new_df = pd.DataFrame(columns=df.columns)
 # Loop over each year in the DataFrame
 for year in df['Year'].unique():
     # Get the maximum round for the year
-    max_round = df.loc[df['Year'] == year, 'Round'].max()
+    max_round = df.loc[df['Year'] == year, 'Round'].astype(int).max().astype(str)
 
     # Append the rows with the maximum round to the new DataFrame
     new_df = pd.concat([new_df, df.loc[(df['Year'] == year) & (df['Round'] == max_round)]])
@@ -126,9 +124,13 @@ for year in df['Year'].unique():
     new_df = pd.concat([new_df, max_round_rows])
 
 # Combine the new DataFrame with the original DataFrame and remove duplicates
-new_df = pd.concat([df, new_df]).drop_duplicates(keep=False)
+new_df = pd.concat([df, new_df])
+
+# Change commas to dots
+new_df['Sets_ratio'] = new_df['Sets_ratio'].astype(str).str.replace(',', '.')
+new_df['Points_ratio'] = new_df['Points_ratio'].astype(str).str.replace(',', '.')
 
 # Save the dataframe to a csv file:
-new_df.to_csv('table_standings.csv', index=False)
+new_df.to_csv('../Datasets/table_standings.csv', index=False)
 # Close browser:
 driver.quit()
