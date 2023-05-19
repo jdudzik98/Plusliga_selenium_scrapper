@@ -11,6 +11,19 @@ batch6 = pd.read_csv('../Datasets/Matches_batch6.csv')
 
 # concatenate the dataframes
 matches = pd.concat([batch1, batch2, batch3, batch4, batch5, batch6], ignore_index=True)
+
+teams = pd.read_csv('../Scripts/teams.csv')
+teams = teams.drop_duplicates(subset='MatchID', keep='first')
+
+# drop the columns Team1_href and Team2_href
+matches = matches.drop(columns=['Team1_href', 'Team2_href'])
+
+# Merge the teams dataframe with the matches dataframe by :
+matches = pd.merge(matches, teams, left_on=['MatchID'], right_on=['MatchID'], how='left', validate="m:1")
+
+# Drop the duplicates from the matches dataframe:
+matches = matches.drop_duplicates(inplace=True)
+
 table = pd.read_csv('../Datasets/Table_standings.csv')
 
 # Duplicate the 'Round' column:
@@ -198,3 +211,5 @@ model_data = merged_df[['MatchID',  # Identifying info
 
 # Save the dataframe to a csv file:
 model_data.to_csv('../Datasets/Plusliga_data_for_model.csv', index=False)
+
+
