@@ -11,7 +11,6 @@ batch6 = pd.read_csv('../Datasets/Matches_batch6.csv')
 
 # concatenate the dataframes
 matches = pd.concat([batch1, batch2, batch3, batch4, batch5, batch6], ignore_index=True)
-
 teams = pd.read_csv('../Scripts/teams.csv')
 teams = teams.drop_duplicates(subset='MatchID', keep='first')
 
@@ -22,8 +21,7 @@ matches = matches.drop(columns=['Team1_href', 'Team2_href'])
 matches = pd.merge(matches, teams, left_on=['MatchID'], right_on=['MatchID'], how='left', validate="m:1")
 
 # Drop the duplicates from the matches dataframe:
-matches = matches.drop_duplicates(inplace=True)
-
+matches.drop_duplicates(inplace=True)
 table = pd.read_csv('../Datasets/Table_standings.csv')
 
 # Duplicate the 'Round' column:
